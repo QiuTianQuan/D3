@@ -1,0 +1,153 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Force</title>
+</head>
+<style>
+.nodetext {
+    font-size: 12px;
+    font-family: SimSun;
+    fill: #000000;
+}
+
+.linetext {
+    font-size: 12px;
+    font-family: SimSun;
+    fill: pink;
+    fill-opacity: 0.0;
+}
+
+</style>
+
+<body>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script>
+    var width = 750;
+    var height = 750;
+    var Wimg = 77;
+    var Himg = 77;
+
+    var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+
+
+    // d3.json("relation.json",function(error,root){
+
+    //     if( error ){
+    //         return console.log(error);
+    //     }
+    //     console.log(root);
+    var nodes = [{ name: "小猪佩奇", image: "imgs/xzpq.png" }, { name: "小猪乔治",
+            image: "imgs/xzqz.png" },
+        { name: "猪爸爸", image: "imgs/zbb.png" }, { name: "猪妈妈", image: "imgs/zmm.png" },
+        { name: "小羊苏西", image: "imgs/xysx.png" }, { name: "小兔瑞贝卡", image: "imgs/xtbrk.png" },
+        { name: "小狗丹尼", image: "imgs/xgdn.png" }
+    ];
+
+    var edges = [{ source: 0, target: 1, relation: "姐弟" }, { source: 0, target: 2, relation: "父女" },
+        { source: 0, target: 3, relation: "母女" }, { source: 1, target: 2, relation: "父子" },
+        { source: 1, target: 3, relation: "母子" }, { source: 0, target: 4, relation: "盆友" }, { source: 0, target: 5, relation: "盆友" }, { source: 0, target: 6, relation: "盆友" }, { source: 2, target: 3, relation: "夫妻" }, { source: 3, target: 2, relation: "夫妻" }
+    ];
+
+    //布局
+    var force = d3.layout.force()
+        .nodes(nodes) //指定节点数组
+        .links(edges) //指定连线数组
+        .size([width, height])
+        .linkDistance(300) //指定连线长度
+        .charge(-1500) //相互之间的作用力
+        .start(); //开始作用
+
+
+
+    var edges_line = svg.selectAll("line")
+        .data(edges)
+        .enter()
+        .append("line")
+        .style("stroke", "yellow")
+        .style("stroke-width", 1);
+
+    var edges_text = svg.selectAll(".linetext")
+        .data(edges)
+        .enter()
+        .append("text")
+        .attr("class", "linetext")
+        .text(function(d) {
+            return d.relation;
+        });
+
+    var nodes_img = svg.selectAll("image")
+        .data(nodes)
+        .enter()
+        .append("image")
+        .attr("width", Wimg)
+        .attr("height", Himg)
+        .attr("xlink:href", function(d) {
+            return d.image;
+        })
+        //显示连接线上的文字
+        .on("mouseover", function(d, i) {
+            edges_text.style("fill-opacity", function(edge) {
+                if (edge.source === d || edge.target === d) {
+                    return 1.0;
+                }
+            });
+        })
+        //隐去连接线上的文字
+        .on("mouseout", function(d, i) {
+            edges_text.style("fill-opacity", function(edge) {
+                if (edge.source === d || edge.target === d) {
+                    return 0.0;
+                }
+            });
+        })
+        .call(force.drag);
+
+    var text_dx = -20;
+    var text_dy = 20;
+
+    var nodes_text = svg.selectAll(".nodetext")
+        .data(nodes)
+        .enter()
+        .append("text")
+        .attr("class", "nodetext")
+        .attr("dx", text_dx)
+        .attr("dy", text_dy)
+        .text(function(d) {
+            return d.name;
+        });
+
+    force.on("tick", function() {
+    //限制结点的边界
+    nodes.forEach(function(d, i) {
+        d.x = d.x - Wimg / 2 < 0 ? Wimg / 2 : d.x;
+        d.x = d.x + Wimg / 2 > width ? width - Wimg / 2 : d.x;
+        d.y = d.y - Himg / 2 < 0 ? Himg / 2 : d.y;
+        d.y = d.y + Himg / 2 + text_dy > height ? height - Himg / 2 - text_dy : d.y;
+    });
+
+    //更新连接线的位置
+    edges_line.attr("x1", function(d) { return d.source.x; });
+    edges_line.attr("y1", function(d) { return d.source.y; });
+    edges_line.attr("x2", function(d) { return d.target.x; });
+    edges_line.attr("y2", function(d) { return d.target.y; });
+
+    //更新连接线上文字的位置
+    edges_text.attr("x", function(d) { return (d.source.x + d.target.x) / 2; });
+    edges_text.attr("y", function(d) { return (d.source.y + d.target.y) / 2; });
+
+
+    //更新结点图片和文字
+    nodes_img.attr("x", function(d) { return d.x - Wimg / 2; });
+    nodes_img.attr("y", function(d) { return d.y - Himg / 2; });
+
+    nodes_text.attr("x", function(d) { return d.x });
+    nodes_text.attr("y", function(d) { return d.y + Wimg / 2; });
+    });
+    </script>
+</body>
+
+</html>
